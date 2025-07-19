@@ -108,4 +108,3 @@ platformio device monitor
 
 MIT License  
 © 2025 Halton Datacenter — Antoine Boucher.
-[EOF]
