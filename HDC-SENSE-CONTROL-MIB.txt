@@ -1,0 +1,124 @@
+HDC-SENSE-CONTROL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+  MODULE-IDENTITY, OBJECT-TYPE, enterprises, Integer32, DisplayString
+    FROM SNMPv2-SMI;
+
+hdcSenseControl MODULE-IDENTITY
+  LAST-UPDATED "202507190000Z"
+  ORGANIZATION "Halton Datacenter"
+  CONTACT-INFO
+    "Antoine Boucher
+     Halton Datacenter"
+  DESCRIPTION
+    "SNMP MIB for HDC Sense & Control Node using ESP32-ETH PoE."
+  ::= { enterprises 55555 }
+
+hdcDevice OBJECT IDENTIFIER ::= { hdcSenseControl 1 }
+
+hdcTemperatureC OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Temperature in Celsius ×100 (e.g., 2573 = 25.73 °C)"
+  ::= { hdcDevice 1 }
+
+hdcTemperatureF OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Temperature in Fahrenheit ×100 (e.g., 7720 = 77.20 °F)"
+  ::= { hdcDevice 2 }
+
+hdcHumidity OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Relative humidity in percent ×100 (e.g., 4567 = 45.67%)"
+  ::= { hdcDevice 3 }
+
+hdcAirflow OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Raw ADC value from Omron D6F-V03A1 airflow sensor (0–4095)"
+  ::= { hdcDevice 4 }
+
+hdcRelay1 OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-write
+  STATUS      current
+  DESCRIPTION "Relay 1 output state (0 = off, 1 = on)"
+  ::= { hdcDevice 5 }
+
+hdcRelay2 OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-write
+  STATUS      current
+  DESCRIPTION "Relay 2 output state (0 = off, 1 = on)"
+  ::= { hdcDevice 6 }
+
+hdcContact1 OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Contact input 1 state (0 = open, 1 = closed)"
+  ::= { hdcDevice 7 }
+
+hdcContact2 OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Contact input 2 state (0 = open, 1 = closed)"
+  ::= { hdcDevice 8 }
+
+hdcUptime OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "System uptime in milliseconds"
+  ::= { hdcDevice 9 }
+
+hdcNodeName OBJECT-TYPE
+  SYNTAX      DisplayString
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Device name or node identifier string"
+  ::= { hdcDevice 10 }
+
+hdcBoardInfo OBJECT-TYPE
+  SYNTAX      DisplayString
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Board info string (e.g., ESP32-ETH)"
+  ::= { hdcDevice 11 }
+
+hdcChipInfo OBJECT-TYPE
+  SYNTAX      DisplayString
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "ESP32 chip revision and core count"
+  ::= { hdcDevice 12 }
+
+hdcMacAddress OBJECT-TYPE
+  SYNTAX      DisplayString
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Ethernet MAC address in colon-separated format"
+  ::= { hdcDevice 13 }
+
+hdcFlashSize OBJECT-TYPE
+  SYNTAX      Integer32
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Flash chip size in bytes"
+  ::= { hdcDevice 14 }
+
+hdcSoftwareVersion OBJECT-TYPE
+  SYNTAX      DisplayString
+  MAX-ACCESS  read-only
+  STATUS      current
+  DESCRIPTION "Firmware software version string"
+  ::= { hdcDevice 15 }
+
+END
