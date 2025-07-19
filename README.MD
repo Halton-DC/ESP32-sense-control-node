@@ -1,82 +1,136 @@
-# HDC Sense & Control Node Firmware
+# HDC Sense & Control Node
 
-**Unified ESP32 PoE Sensor Firmware with SNMP for Zabbix and Datacenter Monitoring**
+Unified firmware for ESP32-based PoE sensor and control devices. This project enables SNMP-based monitoring and control of temperature, humidity, airflow, contact inputs, and relay outputs.
 
----
+## Features
 
-## 📌 Overview
+- 🖧 Ethernet networking (PoE capable)
+- 📈 Temperature and humidity via SHT31 (I2C)
+- 🌬️ Airflow measurement via Omron D6F-V03A1 (analog)
+- 🔌 Two digital contact inputs
+- ⚡ Two relay outputs (digital control)
+- 📡 SNMPv2c agent with read/write support
+- ⏱️ System uptime reporting
+- 🌐 Static IP with DHCP fallback
+- 🧠 Node info query: board, chip ID, revision, MAC, etc.
+- 🔐 Configurable SNMP read/write communities
 
-This firmware powers **ESP32-ETH** based sensor nodes designed for rack-level or room-level environment monitoring and control in data centers or industrial settings. It supports **SNMPv2c GET/SET**, **Ethernet with fallback networking**, and sensors such as:
+## Hardware Requirements
 
-- **Temperature & Humidity** – SHT31 via I2C
-- **Airflow** – Omron D6F-V03A1 (analog input)
-- **Dry contact inputs** – door sensors, alarms, etc.
-- **Relay outputs** – for control (e.g., fan or buzzer)
-- **Hardware Metadata** – chip info, MAC, flash size
-- **SNMP agent** – built-in, fully integrated
+- ESP32 board with Ethernet and PoE (e.g., Olimex ESP32-POE, ESP32-S3-ETH)
+- Sensors:
+  - SHT31 (I2C temperature/humidity)
+  - Omron D6F-V03A1 (analog airflow)
+- Optional:
+  - Two dry contact inputs (GPIO 32/33)
+  - Two relay outputs (GPIO 25/26)
 
----
+## Wiring Summary
 
-## 🌐 Networking Configuration
+| Signal        | GPIO | Notes                     |
+|---------------|------|---------------------------|
+| Relay 1       | 25   | Output                    |
+| Relay 2       | 26   | Output                    |
+| Contact 1     | 32   | Input with pull-up        |
+| Contact 2     | 33   | Input with pull-up        |
+| Airflow       | 34   | Analog input              |
+| I2C SDA       | 21   | Connect to SHT31          |
+| I2C SCL       | 22   | Connect to SHT31          |
 
-The ESP32-ETH node uses **static IP by default**, with automatic fallback to **DHCP** if no static configuration is defined or fails.
+## PlatformIO Setup
 
-### Static IP (default)
-Configured at the top of `main.cpp` using constants:
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32-s3-devkitc-1
+framework = arduino
+monitor_speed = 115200
+upload_speed = 921600
 
-```cpp
-const IPAddress STATIC_IP(192, 168, 1, 150);
-const IPAddress GATEWAY_IP(192, 168, 1, 1);
-const IPAddress SUBNET_MASK(255, 255, 255, 0);
-const IPAddress DNS_IP(8, 8, 8, 8);
+lib_deps =
+  adafruit/Adafruit SHT31 Library@^2.2.0
+  adafruit/Adafruit BusIO@^1.14.2
+
+build_flags =
+  -D ETH_CLK_MODE=ETH_CLOCK_GPIO17_OUT
+  -D ETH_PHY_POWER=12
+  -D ETH_TYPE=ETH_PHY_LAN8720
+  -D ETH_ADDR=1
+  -D ETH_MDC=23
+  -D ETH_MDIO=18
 ```
 
-You can modify these to suit your network. The device will attempt to use this IP first.
+## Build & Upload
 
-### DHCP Fallback
-If the static IP assignment fails (e.g., network unavailable or misconfigured), the firmware falls back to DHCP automatically.
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/hdc/hdc-sense-control-node.git
+    cd hdc-sense-control-node
+    ```
 
-You’ll see status messages over serial:
-- `[ETH] Static IP assigned: ...`
-- `[ETH] Static IP failed, requesting DHCP...`
+2. Open in [Visual Studio Code](https://code.visualstudio.com) with [PlatformIO extension](https://platformio.org/install/ide?install=vscode)
 
-Ethernet configuration uses the **LAN8720 PHY** with GPIO-based clock and power control.
+3. Connect your ESP32 via USB.
 
-### Ethernet Wiring
-- MDC: GPIO23
-- MDIO: GPIO18
-- Power: GPIO12
-- Clock Out: GPIO17 (ETH_CLOCK_GPIO17_OUT)
+4. Upload firmware:
+    ```bash
+    pio run --target upload
+    ```
 
-Ensure your board matches these pin assignments or adjust `platformio.ini` and `main.cpp` accordingly.
+## SNMP Configuration
 
----
+- SNMPv2c support with GET and SET
+- Default community strings are defined in `main.cpp`:
+  ```cpp
+  const char* SNMP_COMMUNITY_READ  = "public";
+  const char* SNMP_COMMUNITY_WRITE = "private";
+  ```
 
-## 🧪 OID Reference
+### OID Summary
 
-| Metric                  | OID                          | Type        | Format     |
-|-------------------------|------------------------------|-------------|------------|
-| Temperature (°C x100)   | `.1.3.6.1.4.1.55555.1.1.0`    | Read        | Integer    |
-| Temperature (°F x100)   | `.1.3.6.1.4.1.55555.1.2.0`    | Read        | Integer    |
-| Humidity (%RH x100)     | `.1.3.6.1.4.1.55555.1.3.0`    | Read        | Integer    |
-| Airflow (ADC 0–4095)    | `.1.3.6.1.4.1.55555.1.4.0`    | Read        | Integer    |
-| Relay 1 State           | `.1.3.6.1.4.1.55555.1.5.0`    | Read/Write  | 0 / 1      |
-| Relay 2 State           | `.1.3.6.1.4.1.55555.1.6.0`    | Read/Write  | 0 / 1      |
-| Contact 1               | `.1.3.6.1.4.1.55555.1.7.0`    | Read        | 0 / 1      |
-| Contact 2               | `.1.3.6.1.4.1.55555.1.8.0`    | Read        | 0 / 1      |
-| Uptime (ms)             | `.1.3.6.1.4.1.55555.1.9.0`    | Read        | Integer    |
-| Node Name               | `.1.3.6.1.4.1.55555.1.10.0`   | Read        | String     |
-| Board Info              | `.1.3.6.1.4.1.55555.1.11.0`   | Read        | String     |
-| Chip Info               | `.1.3.6.1.4.1.55555.1.12.0`   | Read        | String     |
-| MAC Address             | `.1.3.6.1.4.1.55555.1.13.0`   | Read        | String     |
-| Flash Size (bytes)      | `.1.3.6.1.4.1.55555.1.14.0`   | Read        | Integer    |
-| Software Version        | `.1.3.6.1.4.1.55555.1.15.0`   | Read        | String     |
+| Metric             | OID                       | Access    |
+|--------------------|---------------------------|-----------|
+| Temperature (°C)    | `.1.3.6.1.4.1.55555.1.1.0` | Read-only |
+| Temperature (°F)    | `.1.3.6.1.4.1.55555.1.11.0`| Read-only |
+| Humidity (%)        | `.1.3.6.1.4.1.55555.1.2.0` | Read-only |
+| Airflow (V × 1000)  | `.1.3.6.1.4.1.55555.1.3.0` | Read-only |
+| Contact 1 state     | `.1.3.6.1.4.1.55555.1.6.0` | Read-only |
+| Contact 2 state     | `.1.3.6.1.4.1.55555.1.7.0` | Read-only |
+| Relay 1 state       | `.1.3.6.1.4.1.55555.1.4.0` | RW        |
+| Relay 2 state       | `.1.3.6.1.4.1.55555.1.5.0` | RW        |
+| Uptime (sec)        | `.1.3.6.1.4.1.55555.1.99.0`| Read-only |
+| Board Info          | `.1.3.6.1.4.1.55555.1.20.0`| Read-only |
+| Chip Model          | `.1.3.6.1.4.1.55555.1.21.0`| Read-only |
+| Chip Cores          | `.1.3.6.1.4.1.55555.1.22.0`| Read-only |
+| Chip Revision       | `.1.3.6.1.4.1.55555.1.23.0`| Read-only |
+| Flash Size (bytes)  | `.1.3.6.1.4.1.55555.1.24.0`| Read-only |
+| MAC Address         | `.1.3.6.1.4.1.55555.1.25.0`| Read-only |
+| Software Version    | `.1.3.6.1.4.1.55555.1.30.0`| Read-only |
+| Node Name           | `.1.3.6.1.4.1.55555.1.31.0`| RW        |
 
----
+## MIB File
 
-## 🛠️ Setup
+A full MIB file is included in `hdc-sense-control.mib`. You can load it in tools like:
 
-Instructions moved here...
+- [SNMPB](https://sourceforge.net/projects/snmpb/)
+- Zabbix SNMP template import
+- LibreNMS or Observium
 
----
+## Zabbix Integration
 
+A Zabbix YAML template is available in `zabbix-hdc-sense.yaml`. It includes:
+
+- Host macros for SNMP community
+- Items for all sensors and relays
+- Triggers for offline/missing data
+- Graphs for temperature, humidity, airflow
+
+## License
+
+MIT License
+
+## Contact
+
+Halton Datacenter  
+Antoine Boucher  
+https://haltondc.com  
