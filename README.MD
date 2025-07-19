@@ -133,4 +133,3 @@ MIT License
 
 Halton Datacenter  
 Antoine Boucher  
-https://haltondc.com  
