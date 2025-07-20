@@ -19,7 +19,7 @@ This firmware is designed for the **ESP32-S3 ETH with PoE** development board.
 
 | Component          | Description                        |
 |--------------------|------------------------------------|
-| **Board**          | ESP32-ETH with PoE (e.g., Olimex)  |
+| **Board**          | ESP32-S3 ETH                     |
 | **Temp Sensor**    | SHT31 (I2C addr: `0x44`)           |
 | **Airflow Sensor** | Omron D6F-V03A1 → GPIO 34 (ADC)    |
 | **Inputs**         | GPIO 32, 33 (Contact Closure)      |
