@@ -4,7 +4,7 @@
 
 ## Overview
 
-This firmware is designed for the **ESP32-S3 ETH with PoE** development board. Below is a reference image of the board and its pinout for proper wiring.
+This firmware is designed for the **ESP32-S3 ETH with PoE** development board.
 
 - Temperature and humidity monitoring via SHT31 (I2C)
 - Airflow sensing via Omron D6F-V03A1 analog input
@@ -25,7 +25,6 @@ This firmware is designed for the **ESP32-S3 ETH with PoE** development board. B
 | **Inputs**         | GPIO 32, 33 (Contact Closure)      |
 | **Relays**         | GPIO 25, 26                        |
 | **I2C Pins**       | SDA: GPIO 21, SCL: GPIO 22         |
-
 
 ### ESP32-S3 ETH with PoE (Front View)
 
