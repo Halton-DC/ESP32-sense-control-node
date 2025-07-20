@@ -4,7 +4,7 @@
 
 ## Overview
 
-This firmware runs on an ESP32-ETH board (e.g., Olimex ESP32-POE) and provides:
+This firmware is designed for the **ESP32-S3 ETH with PoE** development board. Below is a reference image of the board and its pinout for proper wiring.
 
 - Temperature and humidity monitoring via SHT31 (I2C)
 - Airflow sensing via Omron D6F-V03A1 analog input
@@ -26,19 +26,16 @@ This firmware runs on an ESP32-ETH board (e.g., Olimex ESP32-POE) and provides:
 | **Relays**         | GPIO 25, 26                        |
 | **I2C Pins**       | SDA: GPIO 21, SCL: GPIO 22         |
 
-## Hardware Overview
-
-This firmware is designed for the **ESP32-S3 ETH with PoE** development board. Below is a reference image of the board and its pinout for proper wiring.
 
 ### ESP32-S3 ETH with PoE (Front View)
 
-![ESP32-S3 ETH with PoE Board](esp32-s3-eth-poe.jpg)
+![ESP32-S3 ETH with PoE Board](image/esp32-s3-eth-poe.jpg)
 
 > *This board features an ESP32-S3 microcontroller, onboard LAN8720 Ethernet PHY, and optional Power-over-Ethernet (PoE) support.*
 
 ### ESP32-S3 ETH with PoE Pinout
 
-![ESP32-S3 ETH with PoE Pinout](esp32-s3-eth-poe-pinout.jpg)
+![ESP32-S3 ETH with PoE Pinout](image/esp32-s3-eth-poe-pinout.jpg)
 
 > *This pinout diagram identifies key GPIOs including I2C, analog inputs, and relay control lines used in this project.*
 
