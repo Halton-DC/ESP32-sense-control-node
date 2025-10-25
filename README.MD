@@ -1,4 +1,4 @@
-# HDC Sense & Control Node
+# HDC Sense & Control Node  !!! WORK IN PROGRESS
 
 **Unified SNMP-enabled ESP32 PoE firmware** for environmental monitoring and control.
 
