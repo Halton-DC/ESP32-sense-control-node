@@ -74,6 +74,39 @@ numbers (the Waveshare board silk-labels them `IOxx`).
 > **GPIO1 and GPIO2 are the only free ADC1 pins** (GPIO4–7 = on-board microSD,
 > GPIO9–10 = W5500).
 
+### Relay outputs (2×)
+
+The relay pins are **logic-level control signals** — drive an opto-isolated
+**relay module**, never a bare relay coil (a GPIO can't source coil current, and
+the coil's back-EMF would damage the pin).
+
+```
+  ESP32-S3                     Relay module (2-channel)
+  ┌──────────┐                 ┌──────────────────────┐
+  │   IO36   ├────────────────▶│ IN1                  │
+  │   IO37   ├────────────────▶│ IN2                  │
+  │   5V *   ├────────────────▶│ VCC                  │
+  │   GND    ├────────────────▶│ GND  (shared ground) │
+  └──────────┘                 └──────┬────────┬──────┘
+                                      │ per channel:
+                                 COM ─┤        │
+                            (in) line┈┘   NO ──┴── load  (closed when ON)
+                                           NC ───── load  (closed when OFF)
+```
+
+`* VCC` = **5 V** (board `VBUS` pin, when USB/PoE-powered) for a 5 V module, or
+**3V3** for a 3.3 V module.
+
+- Firmware drives the pin **HIGH = relay ON**. Many low-cost modules are
+  **active-LOW** (IN low = on) — if yours is, use a module with an active-HIGH
+  jumper, or tell me and I'll invert IO36/IO37 in firmware.
+- Wire the load across **COM + NO** (energize to switch on) or **COM + NC**
+  (energize to switch off). Relay state is set from the web UI, REST
+  (`POST /api/relay`) and SNMP, and persists across reboots.
+- ⚠️ **Switching mains/AC:** use a relay module rated for your voltage/current,
+  keep mains wiring fully isolated from the logic side, and follow local
+  electrical code.
+
 ## Toolchain
 
 Requires **arduino-esp32 3.x** (via the pioarduino platform) so the W5500 is a
