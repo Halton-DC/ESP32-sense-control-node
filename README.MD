@@ -23,7 +23,7 @@ to Zabbix over SNMP, with a secure, self-hosted management interface.
 | **Board**          | ESP32-S3-ETH                                   |
 | **Ethernet**       | W5500 (SPI) — exposed as an lwIP `ETH` interface |
 | **Temp/Humidity**  | SHT31 (I²C `0x44`)                             |
-| **Airflow**        | Omron D6F-V03A1 → GPIO 1 (ADC)                 |
+| **Airflow**        | Omron D6F-V03A1 → GPIO 1 (ADC1) — see Wiring    |
 | **Contact inputs** | GPIO 43, 44 (dry contact, `INPUT_PULLUP`)      |
 | **Relays**         | GPIO 36, 37                                    |
 | **I²C**            | SDA 33, SCL 34                                 |
@@ -33,6 +33,46 @@ to Zabbix over SNMP, with a secure, self-hosted management interface.
 > `Serial` is routed to the built-in USB-Serial-JTAG (`ARDUINO_USB_MODE=1`,
 > `ARDUINO_USB_CDC_ON_BOOT=1`), which frees UART0's default pins (GPIO 43/44) for
 > the contact inputs.
+
+## Wiring
+
+All sensors share the ESP32-S3's **3V3** and **GND**. Pins below are ESP32-S3 GPIO
+numbers (the Waveshare board silk-labels them `IOxx`).
+
+| Signal                | ESP32-S3 pin(s)                                   |
+|-----------------------|---------------------------------------------------|
+| SHT31 SDA / SCL       | IO33 / IO34 (+ 3V3, GND) — I²C addr `0x44`         |
+| Airflow Vout          | IO1 (ADC1) — see below                             |
+| Relay 1 / 2           | IO36 / IO37                                        |
+| Contact 1 / 2         | IO43 / IO44 (to GND, `INPUT_PULLUP`)              |
+| W5500 Ethernet (SPI)  | CS 14, SCK 13, MOSI 11, MISO 12, RST 9, INT 10    |
+| BOOT button           | IO0 (hold 5 s at power-up = factory reset)         |
+
+### Omron D6F-V03A1 airflow sensor
+
+3-pin connector (per datasheet): **Pin 1 = Vcc, Pin 2 = Vout, Pin 3 = GND**.
+
+| Sensor pin | Connect to  |
+|------------|-------------|
+| 1 · Vcc    | **3V3**     |
+| 2 · Vout   | **IO1** (ADC1) |
+| 3 · GND    | **GND**     |
+
+> **Supply & accuracy.** The D6F-V03A1 is rated **10.8–24 V** (output **1–5 V**).
+> Wired to **3V3** as above it still responds to airflow but runs **below spec**, so
+> the reported value is an **approximate, monotonic m/s estimate** — great for relative
+> monitoring and triggers, not calibrated velocity. Its output stays ≤ 3.3 V, so Vout
+> connects **directly to IO1 — no divider needed** at 3V3.
+>
+> **For accurate m/s:** power Vcc from **12 V** (e.g. an MT3608 boost) and add a divider
+> on Vout so its 5 V output stays under the 3.3 V ADC — **4.7 kΩ (Vout→IO1) + 5.6 kΩ
+> (IO1→GND)**. Then tune `AIRFLOW_V0` / `AIRFLOW_GAIN` in `src/main.cpp` (and set the
+> divider factor) against a reference anemometer.
+
+> ⚠️ **The analog output must be on ADC1 (GPIO1–10).** ADC2 pins (GPIO11–20) conflict
+> with WiFi, and non-ADC pins (e.g. GPIO39) can't read analog at all. On this board
+> **GPIO1 and GPIO2 are the only free ADC1 pins** (GPIO4–7 = on-board microSD,
+> GPIO9–10 = W5500).
 
 ## Toolchain
 
@@ -90,7 +130,7 @@ Enterprise tree, base `.1.3.6.1.4.1.55555.1` (see `HDC-SENSE-CONTROL-MIB.txt`):
 | `.1.0`  | RO | Temperature (°C ×100)               |
 | `.2.0`  | RO | Temperature (°F ×100)               |
 | `.3.0`  | RO | Humidity (%RH ×100)                 |
-| `.4.0`  | RO | Airflow (raw ADC 0–4095)            |
+| `.4.0`  | RO | Air velocity (m/s ×100)             |
 | `.5.0`  | RW | Relay 1 (0/1)                       |
 | `.6.0`  | RW | Relay 2 (0/1)                       |
 | `.7.0`  | RO | Contact 1 (0/1)                    |

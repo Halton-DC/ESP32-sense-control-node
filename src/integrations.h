@@ -30,7 +30,7 @@ hdcTemperatureF   OBJECT-TYPE SYNTAX Integer32   MAX-ACCESS read-only  STATUS cu
 hdcHumidity       OBJECT-TYPE SYNTAX Integer32   MAX-ACCESS read-only  STATUS current
   DESCRIPTION "Relative humidity percent x100"                    ::= { hdcDevice 3 }
 hdcAirflow        OBJECT-TYPE SYNTAX Integer32   MAX-ACCESS read-only  STATUS current
-  DESCRIPTION "Raw ADC value from the Omron D6F-V03A1 (0-4095)"   ::= { hdcDevice 4 }
+  DESCRIPTION "Air velocity from the D6F-V03A1, m/s x100 (234 = 2.34 m/s)" ::= { hdcDevice 4 }
 hdcRelay1         OBJECT-TYPE SYNTAX Integer32   MAX-ACCESS read-write STATUS current
   DESCRIPTION "Relay 1 output state (0=off, 1=on)"               ::= { hdcDevice 5 }
 hdcRelay2         OBJECT-TYPE SYNTAX Integer32   MAX-ACCESS read-write STATUS current
@@ -146,12 +146,16 @@ static const char ZABBIX_YAML[] PROGMEM = R"ZBX(zabbix_export:
               name: 'High humidity ({ITEM.LASTVALUE1})'
               priority: WARNING
         - uuid: 0a000104b2b2b2b2c3c3c3c3d4d4d4d4
-          name: 'Airflow (raw ADC)'
+          name: 'Air velocity'
           type: SNMP_AGENT
           snmp_oid: '1.3.6.1.4.1.55555.1.4.0'
           key: hdc.airflow
           delay: 30s
-          value_type: UNSIGNED
+          value_type: FLOAT
+          units: 'm/s'
+          preprocessing:
+            - type: MULTIPLIER
+              parameters: ['0.01']
           tags:
             - {tag: component, value: environment}
         - uuid: 0a000105b2b2b2b2c3c3c3c3d4d4d4d4

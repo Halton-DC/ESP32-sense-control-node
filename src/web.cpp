@@ -79,16 +79,6 @@ static esp_err_t denyAuth(httpd_req_t *req) {
   return ESP_OK;
 }
 
-// While the factory password is unchanged, block everything except the
-// password change itself, login/logout and read-only status.
-static bool setupPending(httpd_req_t *req) {
-  if (!g_settings.mustChangePassword) return false;
-  httpd_resp_set_status(req, "403 Forbidden");
-  httpd_resp_set_type(req, "application/json");
-  httpd_resp_sendstr(req, "{\"error\":\"password_change_required\"}");
-  return true;
-}
-
 static bool readBody(httpd_req_t *req, char *buf, size_t max) {
   int total = req->content_len;
   if (total <= 0 || total >= (int)max) return false;
@@ -153,10 +143,8 @@ static esp_err_t hLogout(httpd_req_t *req) {
   return ESP_OK;
 }
 
-static esp_err_t hStatus(httpd_req_t *req) {
-  if (!authed(req)) return denyAuth(req);
+static void buildStatusDoc(JsonDocument &d) {
   WebStatus st; appGetStatus(&st);
-  JsonDocument d;
   d["tempC"] = st.tempC; d["tempF"] = st.tempF; d["humidity"] = st.humidity;
   d["airflow"] = st.airflow; d["contact1"] = st.contact1; d["contact2"] = st.contact2;
   d["relay1"] = st.relay1; d["relay2"] = st.relay2; d["link"] = st.link;
@@ -167,7 +155,64 @@ static esp_err_t hStatus(httpd_req_t *req) {
   d["apActive"] = st.apActive; d["ssid"] = st.ssid;
   d["mustChangePassword"] = g_settings.mustChangePassword;
   d["mac"] = st.mac;
+}
+
+static esp_err_t hStatus(httpd_req_t *req) {
+  if (!authed(req)) return denyAuth(req);
+  JsonDocument d; buildStatusDoc(d);
   return sendJson(req, d);
+}
+
+// --- Server-Sent Events telemetry stream ---
+#define SSE_MAX 2
+static httpd_req_t   *s_sse[SSE_MAX] = {nullptr};
+static SemaphoreHandle_t s_sseLock = nullptr;
+
+static esp_err_t hStream(httpd_req_t *req) {
+  if (!authed(req)) return denyAuth(req);
+  // Set headers (flushed on the first chunk sent from the loop task), then
+  // detach the request so the httpd worker is freed. Do NOT send from here —
+  // returning after a send would let the framework finalize the response.
+  httpd_resp_set_type(req, "text/event-stream");
+  httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
+
+  httpd_req_t *copy = nullptr;
+  if (httpd_req_async_handler_begin(req, &copy) != ESP_OK) return ESP_FAIL;
+
+  if (!s_sseLock) s_sseLock = xSemaphoreCreateMutex();
+  bool placed = false;
+  xSemaphoreTake(s_sseLock, portMAX_DELAY);
+  for (int i = 0; i < SSE_MAX; i++) {
+    if (!s_sse[i]) { s_sse[i] = copy; placed = true; break; }
+  }
+  xSemaphoreGive(s_sseLock);
+  if (!placed) { httpd_req_async_handler_complete(copy); return ESP_OK; } // at capacity → client polls
+  Serial.println("[SSE] client subscribed");
+  return ESP_OK;
+}
+
+void webPushTelemetry() {
+  if (!s_sseLock) return;
+  bool any = false;
+  for (int i = 0; i < SSE_MAX; i++) if (s_sse[i]) { any = true; break; }
+  if (!any) return;
+
+  JsonDocument d; buildStatusDoc(d);
+  String js; serializeJson(d, js);            // serializeJson overwrites, so build separately
+  String frame; frame.reserve(js.length() + 12);
+  frame = "data: "; frame += js; frame += "\n\n";
+
+  xSemaphoreTake(s_sseLock, portMAX_DELAY);
+  for (int i = 0; i < SSE_MAX; i++) {
+    if (!s_sse[i]) continue;
+    esp_err_t e = httpd_resp_send_chunk(s_sse[i], frame.c_str(), frame.length());
+    if (e != ESP_OK) {
+      Serial.printf("[SSE] send failed (%d) - dropping client\n", e);
+      httpd_req_async_handler_complete(s_sse[i]); // client gone → release
+      s_sse[i] = nullptr;
+    }
+  }
+  xSemaphoreGive(s_sseLock);
 }
 
 static esp_err_t hGetSettings(httpd_req_t *req) {
@@ -178,6 +223,7 @@ static esp_err_t hGetSettings(httpd_req_t *req) {
   d["contact"]  = g_settings.contact;
   d["hostname"] = g_settings.hostname;
   d["firmware"] = SOFTWARE_VERSION_STR;
+  d["build"] = BUILD_NUMBER;
   d["dhcpEnabled"] = g_settings.dhcpEnabled;
   d["staticIp"]   = ipToStr(g_settings.staticIp);
   d["staticMask"] = ipToStr(g_settings.staticMask);
@@ -194,6 +240,10 @@ static esp_err_t hGetSettings(httpd_req_t *req) {
   d["relay2Name"] = g_settings.relay2Name;
   d["adminUser"]  = g_settings.adminUser;
   d["sensorIntervalMs"] = g_settings.sensorIntervalMs;
+  d["tempUnitF"] = g_settings.tempUnitF;
+  d["tempOffset"] = g_settings.tempOffC10 / 10.0;
+  d["humOffset"] = g_settings.humOff10 / 10.0;
+  d["airflowOffset"] = g_settings.airflowOff / 100.0;
   d["metricsEnabled"] = g_settings.metricsEnabled;
   d["metricsToken"] = g_settings.metricsToken;
   d["mustChangePassword"] = g_settings.mustChangePassword;
@@ -206,7 +256,6 @@ static void copyStr(char *dst, const char *src, size_t n) {
 
 static esp_err_t hSetSettings(httpd_req_t *req) {
   if (!authed(req)) return denyAuth(req);
-  if (setupPending(req)) return ESP_OK;
   char body[1024];
   if (!readBody(req, body, sizeof(body))) return sendErr(req, "400 Bad Request", "bad body");
   JsonDocument in;
@@ -218,6 +267,10 @@ static esp_err_t hSetSettings(httpd_req_t *req) {
   if (in["location"].is<const char *>()) copyStr(g_settings.location, in["location"], sizeof(g_settings.location));
   if (in["contact"].is<const char *>())  copyStr(g_settings.contact,  in["contact"],  sizeof(g_settings.contact));
   if (in["sensorIntervalMs"].is<int>())  g_settings.sensorIntervalMs = constrain((int)in["sensorIntervalMs"], 250, 60000);
+  if (in["tempUnitF"].is<bool>())        g_settings.tempUnitF = in["tempUnitF"];
+  if (!in["tempOffset"].isNull())    g_settings.tempOffC10 = constrain((int)lroundf((float)in["tempOffset"] * 10), -200, 200);
+  if (!in["humOffset"].isNull())     g_settings.humOff10   = constrain((int)lroundf((float)in["humOffset"] * 10), -200, 200);
+  if (!in["airflowOffset"].isNull()) g_settings.airflowOff = constrain((int)lroundf((float)in["airflowOffset"] * 100), -1000, 1000);
   if (in["metricsEnabled"].is<bool>())   g_settings.metricsEnabled = in["metricsEnabled"];
   if (in["metricsToken"].is<const char *>()) copyStr(g_settings.metricsToken, in["metricsToken"], sizeof(g_settings.metricsToken));
 
@@ -251,7 +304,6 @@ static esp_err_t hSetSettings(httpd_req_t *req) {
 
 static esp_err_t hRelay(httpd_req_t *req) {
   if (!authed(req)) return denyAuth(req);
-  if (setupPending(req)) return ESP_OK;
   char body[128];
   if (!readBody(req, body, sizeof(body))) return sendErr(req, "400 Bad Request", "bad body");
   JsonDocument in;
@@ -289,7 +341,6 @@ static esp_err_t hPassword(httpd_req_t *req) {
 
 static esp_err_t hReboot(httpd_req_t *req) {
   if (!authed(req)) return denyAuth(req);
-  if (setupPending(req)) return ESP_OK;
   httpd_resp_sendstr(req, "{\"ok\":true}");
   delay(300);
   appReboot();
@@ -336,8 +387,8 @@ static esp_err_t hMetrics(httpd_req_t *req) {
   m += "hdc_temperature_fahrenheit " + String(st.tempF, 2) + "\n";
   m += "# HELP hdc_humidity_percent Relative humidity percent\n# TYPE hdc_humidity_percent gauge\n";
   m += "hdc_humidity_percent " + String(st.humidity, 2) + "\n";
-  m += "# HELP hdc_airflow_adc Airflow raw ADC value\n# TYPE hdc_airflow_adc gauge\n";
-  m += "hdc_airflow_adc " + String(st.airflow) + "\n";
+  m += "# HELP hdc_airflow_mps Air velocity estimate (m/s)\n# TYPE hdc_airflow_mps gauge\n";
+  m += "hdc_airflow_mps " + String(st.airflow / 100.0, 2) + "\n";
   m += "# HELP hdc_relay_state Relay output state (0/1)\n# TYPE hdc_relay_state gauge\n";
   m += "hdc_relay_state{relay=\"1\"} " + String(st.relay1 ? 1 : 0) + "\n";
   m += "hdc_relay_state{relay=\"2\"} " + String(st.relay2 ? 1 : 0) + "\n";
@@ -437,6 +488,7 @@ void webBegin() {
   reg("/api/mib", HTTP_GET, hMib);
   reg("/api/zabbix", HTTP_GET, hZabbix);
   reg("/api/grafana", HTTP_GET, hGrafana);
+  reg("/api/stream", HTTP_GET, hStream);
   reg("/metrics", HTTP_GET, hMetrics);
 
   s_started = true;

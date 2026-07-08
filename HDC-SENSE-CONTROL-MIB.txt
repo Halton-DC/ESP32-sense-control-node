@@ -41,7 +41,7 @@ hdcAirflow OBJECT-TYPE
   SYNTAX      Integer32
   MAX-ACCESS  read-only
   STATUS      current
-  DESCRIPTION "Raw ADC value from Omron D6F-V03A1 airflow sensor (0–4095)"
+  DESCRIPTION "Air velocity from Omron D6F-V03A1, m/s x100 (e.g. 234 = 2.34 m/s)"
   ::= { hdcDevice 4 }
 
 hdcRelay1 OBJECT-TYPE

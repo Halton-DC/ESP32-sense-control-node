@@ -20,7 +20,7 @@ static const char WEBUI_HTML[] PROGMEM = R"HTMLDOC(<!doctype html>
   --bg:#f2f2f7; --group:#ffffff; --tile:#ffffff; --chrome:rgba(249,249,251,.72);
   --label:#1c1c1e; --label2:rgba(60,60,67,.62); --label3:rgba(60,60,67,.36);
   --sep:rgba(60,60,67,.14); --hair:rgba(60,60,67,.10);
-  --accent:#0d9488; --accent-press:#0b7d73; --on:#34c759; --danger:#ff3b30;
+  --accent:#5b5bd6; --accent-press:#4a49c4; --on:#34c759; --danger:#ff3b30;
   --field:#ffffff; --field-line:rgba(60,60,67,.20);
   --shadow:0 .5px 1px rgba(0,0,0,.04),0 8px 28px rgba(0,0,0,.07);
   --radius:18px; --ctl:12px;
@@ -31,7 +31,7 @@ static const char WEBUI_HTML[] PROGMEM = R"HTMLDOC(<!doctype html>
     --bg:#000000; --group:#1c1c1e; --tile:#1c1c1e; --chrome:rgba(24,24,26,.72);
     --label:#f5f5f7; --label2:rgba(235,235,245,.60); --label3:rgba(235,235,245,.30);
     --sep:rgba(84,84,88,.55); --hair:rgba(84,84,88,.4);
-    --accent:#2dd4bf; --accent-press:#5ee0d0; --on:#30d158; --danger:#ff453a;
+    --accent:#a5a2f6; --accent-press:#b8b6f9; --on:#30d158; --danger:#ff453a;
     --field:#2c2c2e; --field-line:rgba(84,84,88,.6);
     --shadow:0 .5px 1px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.5);
   }
@@ -54,9 +54,8 @@ header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px
   padding:12px max(20px,env(safe-area-inset-left)) 12px max(20px,env(safe-area-inset-left));
   background:var(--chrome);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
   border-bottom:.5px solid var(--sep)}
-.brand{width:30px;height:30px;border-radius:8px;flex:0 0 auto;
-  background:linear-gradient(160deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#000));
-  color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;box-shadow:var(--shadow)}
+.brand{width:32px;height:32px;flex:0 0 auto;display:block}
+.brand svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 6px color-mix(in srgb,#574fe0 45%,transparent))}
 .hgroup .n{font-weight:700;font-size:17px;letter-spacing:-.02em;line-height:1.15}
 .hgroup .l{font-size:12.5px;color:var(--label2)}
 .grow{flex:1}
@@ -134,15 +133,53 @@ label.fld .cap{font-size:12.5px;color:var(--label2);margin-bottom:6px;display:bl
 .pad{padding:14px 16px}
 .saverow{padding:14px 0 2px}
 
-/* Dashboard hero */
-.hero{background:var(--group);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px;
-  display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap}
-.hero .big{font-size:66px;font-weight:600;letter-spacing:-.04em;line-height:.9}
-.hero .big .deg{font-size:34px;color:var(--label2);font-weight:500;vertical-align:top}
-.hero .cap{color:var(--label2);font-size:14px;margin-top:8px}
-.hero .side{display:flex;gap:26px}
-.hero .side .s .l{font-size:12px;color:var(--label2);text-transform:uppercase;letter-spacing:.04em}
-.hero .side .s .val{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-top:3px}
+/* Live dashboard */
+.livehero{position:relative;overflow:hidden;border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:22px 24px;min-height:196px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 24%,var(--group)) 0%,
+            color-mix(in srgb,var(--accent) 7%,var(--group)) 52%,var(--group) 100%)}
+.lh-chart{position:absolute;left:0;right:0;bottom:0;width:100%;height:88%;display:block}
+.lh-info{position:relative;z-index:1;display:inline-block;
+  background:color-mix(in srgb,var(--group) 4%,transparent);
+  -webkit-backdrop-filter:saturate(190%) blur(10px);backdrop-filter:saturate(190%) blur(10px);
+  border:1px solid color-mix(in srgb,#fff 28%,transparent);
+  border-radius:18px;padding:13px 17px 15px;
+  box-shadow:0 12px 36px rgba(0,0,0,.14),
+             inset 0 1px 0 color-mix(in srgb,#fff 50%,transparent),
+             inset 0 0 0 .5px color-mix(in srgb,#fff 10%,transparent)}
+@media (prefers-color-scheme:dark){
+  .lh-info{background:color-mix(in srgb,var(--group) 7%,transparent);
+    border-color:color-mix(in srgb,#fff 16%,transparent);
+    box-shadow:0 12px 36px rgba(0,0,0,.5),inset 0 1px 0 color-mix(in srgb,#fff 20%,transparent)}}
+.lh-k{font-size:12.5px;color:var(--label2);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.lh-v{font-size:54px;font-weight:600;letter-spacing:-.04em;line-height:.95;margin-top:6px}
+.lh-u{font-size:25px;color:var(--label2);font-weight:500;vertical-align:top;margin-left:2px}
+.lh-meta{font-size:15px;color:var(--label);font-weight:500;margin-top:10px;display:flex;align-items:center;gap:12px}
+.lh-mm{font-size:12.5px;color:var(--label2);font-weight:500;margin-top:6px}
+.lh-mm b{color:var(--label);font-weight:600}
+.lh-axis{position:absolute;left:22px;right:22px;bottom:4px;display:flex;justify-content:space-between;
+  font-size:11px;font-weight:600;color:var(--label2);z-index:0;pointer-events:none;font-variant-numeric:tabular-nums}
+.lh-yaxis{position:absolute;right:14px;top:14px;bottom:26px;z-index:0;display:flex;flex-direction:column;
+  justify-content:space-between;align-items:flex-end;pointer-events:none}
+.lh-yaxis span{font-size:11px;font-weight:600;color:var(--label3);font-variant-numeric:tabular-nums}
+.seg{display:inline-flex;background:var(--field);border:.5px solid var(--field-line);border-radius:9px;overflow:hidden;margin-left:auto}
+.seg button{padding:6px 15px;font-size:14px;font-weight:600;color:var(--label2);background:transparent;transition:.15s}
+.seg button.on{background:var(--accent);color:#fff}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--on)}
+.pulse{animation:pulse 1.9s var(--spring) infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--on) 55%,transparent)}70%{box-shadow:0 0 0 9px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.trend{font-size:13px;font-weight:600;color:var(--label3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.trend.up{color:#ff8f0a}.trend.down{color:#0a84ff}
+.cards2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:520px){.cards2{grid-template-columns:1fr}}
+.gcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 16px 10px}
+.gc-head{width:100%;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--label2);font-weight:600}
+.dial{position:relative;width:150px;height:150px;margin:2px 0}
+.dial svg{width:100%;height:100%;display:block}
+.dial-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dial-c span{font-size:32px;font-weight:700;letter-spacing:-.03em}
+.dial-c i{font-size:11px;color:var(--label2);font-style:normal;letter-spacing:.04em;margin-top:2px}
+.mspark{width:100%;height:40px;display:block;margin-top:2px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:12px}
 .tile{background:var(--tile);border-radius:16px;box-shadow:var(--shadow);padding:15px 16px}
 .tile .l{font-size:12px;color:var(--label2);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px}
@@ -165,13 +202,15 @@ label.fld .cap{font-size:12.5px;color:var(--label2);margin-bottom:6px;display:bl
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .overlay{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:24px;background:var(--bg)}
 .login{width:100%;max-width:340px;text-align:center}
-.login .brand{width:56px;height:56px;border-radius:15px;font-size:26px;margin:0 auto 16px}
+.login .brand{width:58px;height:58px;margin:0 auto 16px}
 .login h1{font-size:24px;font-weight:700;letter-spacing:-.03em}
 .login p{color:var(--label2);font-size:14px;margin:6px 0 22px}
 .login .group{margin-bottom:16px;text-align:left}
 .login .row{padding:0}
 .login .row+.row::before{left:16px}
 .err{color:var(--danger);font-size:13.5px;min-height:18px;margin-top:2px}
+.navfoot{margin-top:12px;padding:6px 12px;font-size:10.5px;color:var(--label3);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+@media(max-width:720px){.navfoot{display:none}}
 a.row{color:inherit;text-decoration:none}
 a.row .v{color:var(--accent);font-weight:600}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -179,9 +218,14 @@ a.row .v{color:var(--accent);font-weight:600}
 </head>
 <body>
 
+<svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+  <linearGradient id="lgrad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#8f88ff"/><stop offset="1" stop-color="#514ad9"/>
+  </linearGradient></defs></svg>
+
 <div id="login" class="overlay">
   <form class="login" onsubmit="doLogin(event)">
-    <div class="brand">H</div>
+    <div class="brand"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="url(#lgrad)"/><path d="M6.5 18.2 H10.8 L13.2 11 L16.6 21.6 L19.4 14.2 L21.8 14.2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.4" cy="14.2" r="1.85" fill="#fff"/></svg></div>
     <h1>HDC Node</h1><p>Sign in to manage this node</p>
     <div class="group">
       <label class="fld"><input id="lu" type="text" placeholder="Username" autocomplete="username" value="admin"></label>
@@ -194,7 +238,7 @@ a.row .v{color:var(--accent);font-weight:600}
 
 <div id="setup" class="overlay hidden">
   <form class="login" onsubmit="doSetup(event)">
-    <div class="brand">H</div>
+    <div class="brand"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="url(#lgrad)"/><path d="M6.5 18.2 H10.8 L13.2 11 L16.6 21.6 L19.4 14.2 L21.8 14.2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.4" cy="14.2" r="1.85" fill="#fff"/></svg></div>
     <h1>Secure this node</h1><p>Create your administrator account to continue</p>
     <div class="group" style="text-align:left">
       <label class="fld"><span class="cap">Current password</span><input id="suCur" type="password" autocomplete="current-password"></label>
@@ -203,13 +247,14 @@ a.row .v{color:var(--accent);font-weight:600}
       <label class="fld"><span class="cap">Confirm password</span><input id="suNew2" type="password" autocomplete="new-password"></label>
     </div>
     <button class="btn">Create Account</button>
+    <button type="button" class="txtbtn" style="display:block;margin:12px auto 0" onclick="skipSetup()">Leave password unchanged</button>
     <div id="suErr" class="err"></div>
   </form>
 </div>
 
 <div id="app" class="hidden">
 <header>
-  <div class="brand">H</div>
+  <div class="brand"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="url(#lgrad)"/><path d="M6.5 18.2 H10.8 L13.2 11 L16.6 21.6 L19.4 14.2 L21.8 14.2" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23.4" cy="14.2" r="1.85" fill="#fff"/></svg></div>
   <div class="hgroup"><div class="n" id="hName">HDC Node</div><div class="l" id="hLoc">—</div></div>
   <div class="grow"></div>
   <span class="chip"><span class="dot" id="netDot"></span><span id="netTxt">—</span></span>
@@ -224,27 +269,46 @@ a.row .v{color:var(--accent);font-weight:600}
     <button data-tab="relay" onclick="tab('relay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg><span>Relays</span></button>
     <button data-tab="sec" onclick="tab('sec')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>Security</span></button>
     <button data-tab="sys" onclick="tab('sys')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h7M15 18h5"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="13" cy="18" r="2"/></svg><span>System</span></button>
+    <div class="navfoot" id="navfoot"></div>
   </nav>
 
   <main>
     <div id="pwBanner" class="banner hidden"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ff9f0a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4"/><path d="M12 17.5v.01"/></svg><span>Default password in use — set a new one under <b>Security</b>.</span></div>
 
     <section data-pane="dash">
-      <div class="hero">
-        <div>
-          <div class="big mono"><span id="mTc">—</span><span class="deg">°C</span></div>
-          <div class="cap"><span id="mTf">—</span> °F · updated live</div>
+      <div class="livehero">
+        <svg class="lh-chart" id="sparkT" viewBox="0 0 340 130" preserveAspectRatio="none"></svg>
+        <div class="lh-info">
+          <div class="lh-k">Temperature <span class="pulse" title="live"></span></div>
+          <div class="lh-v mono"><span id="heroTemp">—</span><span class="lh-u" id="heroUnit">°C</span></div>
+          <div class="lh-meta"><span id="heroSec">—</span><span class="trend" id="tTrend"></span></div>
+          <div class="lh-mm">min <b id="tMin">—</b> · max <b id="tMax">—</b></div>
         </div>
-        <div class="side">
-          <div class="s"><div class="l">Humidity</div><div class="val mono"><span id="mH">—</span>%</div></div>
-          <div class="s"><div class="l">Airflow</div><div class="val mono" id="mA">—</div></div>
+        <div class="lh-axis"><span id="axL">−60s</span><span id="axM">−30s</span><span>now</span></div>
+        <div class="lh-yaxis"><span id="yTop">—</span><span id="yBot">—</span></div>
+      </div>
+
+      <div class="cards2">
+        <div class="card gcard">
+          <div class="gc-head"><span>Humidity</span><span class="trend" id="hTrend"></span></div>
+          <div class="dial"><svg id="gaugeH" viewBox="0 0 120 120"></svg>
+            <div class="dial-c"><span class="mono" id="mH">—</span><i>%RH</i></div></div>
+          <svg class="mspark" id="sparkH" viewBox="0 0 220 40" preserveAspectRatio="none"></svg>
+        </div>
+        <div class="card gcard">
+          <div class="gc-head"><span>Airflow</span><span class="trend" id="aTrend"></span></div>
+          <div class="dial"><svg id="gaugeA" viewBox="0 0 120 120"></svg>
+            <div class="dial-c"><span class="mono" id="mA">—</span><i>m/s</i></div></div>
+          <svg class="mspark" id="sparkA" viewBox="0 0 220 40" preserveAspectRatio="none"></svg>
         </div>
       </div>
+
       <div class="tiles">
         <div class="tile"><div class="l">Contact 1</div><div class="val"><span class="badge open" id="mC1">—</span></div></div>
         <div class="tile"><div class="l">Contact 2</div><div class="val"><span class="badge open" id="mC2">—</span></div></div>
-        <div class="tile"><div class="l">Uptime</div><div class="val mono" id="mUp" style="font-size:19px">—</div></div>
-        <div class="tile"><div class="l">Address</div><div class="val mono" id="mIp" style="font-size:17px">—</div></div>
+        <div class="tile"><div class="l">Signal</div><div class="val" style="display:flex;align-items:center;gap:8px;font-size:17px"><span class="bars" id="dBars"></span><span id="dRssi">—</span></div></div>
+        <div class="tile"><div class="l">Uptime</div><div class="val mono" id="mUp" style="font-size:18px">—</div></div>
+        <div class="tile"><div class="l">Address</div><div class="val mono" id="mIp" style="font-size:16px">—</div></div>
       </div>
 
       <div class="gtitle">Relays</div>
@@ -321,6 +385,12 @@ a.row .v{color:var(--accent);font-weight:600}
     </section>
 
     <section data-pane="sys" class="hidden">
+      <div class="gtitle">Display</div>
+      <div class="group">
+        <div class="row"><div class="k">Primary temperature unit</div>
+          <div class="seg"><button id="segC" onclick="setUnit(false)">°C</button><button id="segF" onclick="setUnit(true)">°F</button></div></div>
+      </div>
+
       <div class="gtitle">Identity</div>
       <div class="group">
         <label class="fld"><span class="cap">Node name</span><input id="node" type="text"></label>
@@ -329,6 +399,15 @@ a.row .v{color:var(--accent);font-weight:600}
         <label class="fld"><span class="cap">Sensor interval (ms)</span><input id="interval" type="number" min="250" max="60000" step="250"></label>
       </div>
       <div class="saverow"><button class="btn" onclick="saveSettings()">Save</button></div>
+
+      <div class="gtitle">Calibration</div>
+      <div class="group">
+        <label class="fld"><span class="cap">Temperature offset (°C)</span><input id="tOff" type="number" step="0.1" min="-20" max="20"></label>
+        <label class="fld"><span class="cap">Humidity offset (%RH)</span><input id="hOff" type="number" step="0.1" min="-20" max="20"></label>
+        <label class="fld"><span class="cap">Airflow offset (m/s)</span><input id="aOff" type="number" step="0.1" min="-10" max="10"></label>
+      </div>
+      <p class="gnote">Trim against a reference instrument. Not a substitute for mounting the sensor away from the self-heating board.</p>
+      <div class="saverow"><button class="btn" onclick="saveSettings()">Save calibration</button></div>
 
       <div class="gtitle">Prometheus &amp; Grafana</div>
       <div class="group">
@@ -365,7 +444,7 @@ a.row .v{color:var(--accent);font-weight:600}
 <div id="toast" class="toast"></div>
 
 <script>
-let S={},curPass='';
+let S={},curPass='',es=null,lastMsg=0,lastD=null;
 function $(i){return document.getElementById(i)}
 function toast(m){let t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400)}
 async function api(p,m,b){let o={method:m||'GET',headers:{},credentials:'same-origin'};
@@ -374,9 +453,10 @@ async function api(p,m,b){let o={method:m||'GET',headers:{},credentials:'same-or
   if(!r.ok){let t='';try{t=(await r.json()).error}catch(e){}throw new Error(t||('HTTP '+r.status))}
   let c=r.headers.get('content-type')||'';return c.includes('json')?r.json():r.text()}
 function hideAll(){['login','setup','app'].forEach(i=>$(i).classList.add('hidden'))}
-function showLogin(){hideAll();$('login').classList.remove('hidden')}
+function showLogin(){stopStream();hideAll();$('login').classList.remove('hidden')}
 function showApp(){hideAll();$('app').classList.remove('hidden')}
 function showSetup(){hideAll();$('setup').classList.remove('hidden');if(curPass)suCur.value=curPass}
+async function skipSetup(){showApp();await loadAll()}
 async function doLogin(e){e.preventDefault();try{let r=await api('/api/login','POST',{username:lu.value,password:lp.value});
   curPass=lp.value;if(r.mustChangePassword){showSetup()}else{showApp();await loadAll()}}
   catch(err){$('lerr').textContent='Incorrect username or password'}}
@@ -392,9 +472,36 @@ function tab(id){document.querySelectorAll('#nav button').forEach(b=>b.classList
     if(on){p.style.animation='none';p.offsetHeight;p.style.animation=''}})}
 function bars(rssi){let n=rssi>=-55?4:rssi>=-67?3:rssi>=-78?2:rssi>=-88?1:0,h=[6,9,12,14],o='';
   for(let i=0;i<4;i++)o+='<i class="'+(i<n?'on':'')+'" style="height:'+h[i]+'px"></i>';return o}
+
+// --- realtime charts (client-side rolling window, no external libs) ---
+const HMAX=60; let hist={t:[],h:[],a:[]};
+function pushHist(d){hist.t.push(d.tempC);hist.h.push(d.humidity);hist.a.push(d.airflow);
+  for(const k in hist) if(hist[k].length>HMAX) hist[k].shift()}
+function spark(id,data,area,minSpan){let el=$(id);if(!el)return;let vb=el.viewBox.baseVal,W=vb.width,H=vb.height,pad=8;
+  if(data.length<2){el.innerHTML='';return}
+  // Enforce a minimum vertical span so small fluctuations don't get amplified
+  // to full height (keeps the magnitude honest instead of gimmicky).
+  let dmn=Math.min(...data),dmx=Math.max(...data),mid=(dmn+dmx)/2;
+  let rng=Math.max(dmx-dmn,minSpan||0,1e-6),mn=mid-rng/2;
+  let pts=data.map((v,i)=>[i/(data.length-1)*W,H-pad-((v-mn)/rng)*(H-2*pad)]);
+  let line='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+  let g=id+'g',svg='';
+  if(area){let a='M'+pts[0][0].toFixed(1)+' '+H+' L'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L')+' L'+W+' '+H+' Z';
+    svg='<defs><linearGradient id="'+g+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".30"/><stop offset=".78" stop-color="var(--accent)" stop-opacity=".22"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs><path d="'+a+'" fill="url(#'+g+')"/>'}
+  svg+='<path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="'+(area?2.4:1.8)+'" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+  el.innerHTML=svg}
+function gauge(id,pct,color){let el=$(id);if(!el)return;pct=Math.max(0,Math.min(1,pct));let C=2*Math.PI*50;
+  if(!el.dataset.init){el.innerHTML='<circle cx="60" cy="60" r="50" fill="none" stroke="var(--field-line)" stroke-width="10"/>'+
+    '<circle class="gv" cx="60" cy="60" r="50" fill="none" stroke="'+color+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+C.toFixed(1)+'" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .6s cubic-bezier(.32,.72,0,1)"/>';el.dataset.init=1}
+  el.querySelector('.gv').style.strokeDashoffset=(C*(1-pct)).toFixed(1)}
+function trend(id,data,unit,dec){let el=$(id);if(!el)return;if(data.length<4){el.textContent='';el.className='trend';return}
+  let d=data[data.length-1]-data[Math.max(0,data.length-6)];let up=d>(dec?0.05:0.5),dn=d<-(dec?0.05:0.5);
+  el.textContent=(up?'▲':dn?'▼':'▬')+' '+(d>=0?'+':'')+d.toFixed(dec)+unit;el.className='trend '+(up?'up':dn?'down':'')}
 async function loadSettings(){
   S=await api('/api/settings');
-  hName.textContent=S.nodeName;hLoc.textContent=S.location;fw.textContent='v'+S.firmware;
+  hName.textContent=S.nodeName;hLoc.textContent=S.location;
+  fw.textContent='v'+S.firmware+' · build '+(S.build||0);
+  navfoot.textContent='build '+(S.build||0);
   node.value=S.nodeName;loc.value=S.location;contact.value=S.contact;interval.value=S.sensorIntervalMs;hostname.value=S.hostname;
   dhcp.checked=S.dhcpEnabled;ip.value=S.staticIp;mask.value=S.staticMask;gw.value=S.staticGw;dns.value=S.staticDns;
   wifiEn.checked=S.wifiEnabled;wifiSsid.value=S.wifiSsid;wifiPass.value='';
@@ -402,21 +509,47 @@ async function loadSettings(){
   snmpEn.checked=S.snmpEnabled;snmpWrEn.checked=S.snmpWriteEnabled;snmpRo.value=S.snmpReadCommunity;snmpRw.value=S.snmpWriteCommunity;
   r1name.value=S.relay1Name;r2name.value=S.relay2Name;r1lbl.textContent=S.relay1Name;r2lbl.textContent=S.relay2Name;
   admUser.value=S.adminUser;$('pwBanner').classList.toggle('hidden',!S.mustChangePassword);
-  metricsEn.checked=S.metricsEnabled;metricsTok.value=S.metricsToken||'';$('metricsUrl').textContent=location.host}
-async function loadStatus(){try{let d=await api('/api/status');
-  mTc.textContent=d.tempC.toFixed(1);mTf.textContent=d.tempF.toFixed(1);mH.textContent=d.humidity.toFixed(0);mA.textContent=d.airflow;
+  metricsEn.checked=S.metricsEnabled;metricsTok.value=S.metricsToken||'';$('metricsUrl').textContent=location.host;
+  segC.classList.toggle('on',!S.tempUnitF);segF.classList.toggle('on',!!S.tempUnitF);
+  tOff.value=S.tempOffset;hOff.value=S.humOffset;aOff.value=S.airflowOffset}
+async function setUnit(f){S.tempUnitF=f;segC.classList.toggle('on',!f);segF.classList.toggle('on',f);
+  if(lastD)applyStatus(lastD);try{await api('/api/settings','POST',{tempUnitF:f})}catch(e){}}
+function applyStatus(d){lastMsg=Date.now();lastD=d;
+  let useF=!!S.tempUnitF,tc=(v)=>useF?v*1.8+32:v;
+  heroTemp.textContent=(useF?d.tempF:d.tempC).toFixed(1);heroUnit.textContent=useF?'°F':'°C';
+  heroSec.textContent=(useF?d.tempC:d.tempF).toFixed(1)+' '+(useF?'°C':'°F');
+  mH.textContent=d.humidity.toFixed(0);mA.textContent=(d.airflow/100).toFixed(1);
   setBadge('mC1',d.contact1);setBadge('mC2',d.contact2);mUp.textContent=d.uptime;mIp.textContent=d.ip;mac.textContent=d.mac||S.mac||'—';
   r1.checked=d.relay1;r2.checked=d.relay2;
   netDot.className='dot '+(d.link?'on':(d.apActive?'off':'off'));netTxt.textContent=d.mode+(d.ip&&d.ip!=='0.0.0.0'?' · '+d.ip:'');
   nMode.textContent=d.mode;nEth.textContent=d.ethLink?(d.ethIp+' · link up'):'no link';
   nWifi.textContent=d.wifiUp?(d.wifiIp+' · '+d.wifiRssi+' dBm'):(d.apActive?('AP '+d.ssid):'not connected');
-  nBars.innerHTML=d.wifiUp?bars(d.wifiRssi):''}catch(e){}}
+  nBars.innerHTML=d.wifiUp?bars(d.wifiRssi):'';
+  // realtime dashboard
+  pushHist(d);
+  spark('sparkT',hist.t,true,4);spark('sparkH',hist.h,false,8);spark('sparkA',hist.a,false,40);
+  gauge('gaugeH',d.humidity/100,'var(--accent)');gauge('gaugeA',d.airflow/500,'#06b6d4');
+  trend('tTrend',useF?hist.t.map(tc):hist.t,'°',1);trend('hTrend',hist.h,'%',0);trend('aTrend',hist.a.map(v=>v/100),' m/s',1);
+  if(hist.t.length){let dmn=Math.min(...hist.t),dmx=Math.max(...hist.t),mid=(dmn+dmx)/2,span=Math.max(dmx-dmn,4);
+    let mn=useF?tc(dmn):dmn,mx=useF?tc(dmx):dmx;
+    tMin.textContent=mn.toFixed(1);tMax.textContent=mx.toFixed(1);
+    // value scale = the chart's actual top/bottom bounds so you can read the peak
+    yTop.textContent=Math.round(tc(mid+span/2))+'°';yBot.textContent=Math.round(tc(mid-span/2))+'°'}
+  let n=hist.t.length;axL.textContent='−'+n+'s';axM.textContent='−'+Math.max(1,Math.round(n/2))+'s';
+  dBars.innerHTML=d.wifiUp?bars(d.wifiRssi):'';
+  dRssi.textContent=d.wifiUp?(d.wifiRssi+' dBm'):(d.ethLink?'Ethernet':'—');
+}
+async function loadStatus(){try{applyStatus(await api('/api/status'))}catch(e){}}
+function startStream(){if(es)return;try{es=new EventSource('/api/stream');
+  es.onmessage=e=>{try{applyStatus(JSON.parse(e.data))}catch(x){}}}catch(x){es=null}}
+function stopStream(){if(es){es.close();es=null}}
 function setBadge(id,closed){let e=$(id);e.textContent=closed?'Closed':'Open';e.className='badge '+(closed?'closed':'open')}
 async function saveSettings(){let b={nodeName:node.value,location:loc.value,contact:contact.value,hostname:hostname.value,sensorIntervalMs:+interval.value,
   dhcpEnabled:dhcp.checked,staticIp:ip.value,staticMask:mask.value,staticGw:gw.value,staticDns:dns.value,
   wifiEnabled:wifiEn.checked,wifiSsid:wifiSsid.value,wifiPass:wifiPass.value,
   snmpEnabled:snmpEn.checked,snmpWriteEnabled:snmpWrEn.checked,snmpReadCommunity:snmpRo.value,snmpWriteCommunity:snmpRw.value,
-  relay1Name:r1name.value,relay2Name:r2name.value,metricsEnabled:metricsEn.checked,metricsToken:metricsTok.value};
+  relay1Name:r1name.value,relay2Name:r2name.value,metricsEnabled:metricsEn.checked,metricsToken:metricsTok.value,
+  tempOffset:+tOff.value,humOffset:+hOff.value,airflowOffset:+aOff.value};
   try{await api('/api/settings','POST',b);toast('Saved · network changes need a reboot');await loadSettings()}catch(e){toast('Save failed: '+e.message)}}
 async function setRelay(n,on){try{await api('/api/relay','POST',{relay:n,state:on?1:0})}catch(e){toast('Relay change failed')}}
 async function changePw(){try{await api('/api/password','POST',{username:admUser.value,current:pwCur.value,new:pwNew.value});
@@ -424,9 +557,10 @@ async function changePw(){try{await api('/api/password','POST',{username:admUser
 async function reboot(){if(!confirm('Reboot the node now?'))return;try{await api('/api/reboot','POST',{})}catch(e){}toast('Rebooting…')}
 async function factory(){if(!confirm('Factory reset erases ALL settings and the TLS certificate, then reboots. Continue?'))return;
   try{await api('/api/factory-reset','POST',{})}catch(e){}toast('Restoring factory defaults…')}
-async function loadAll(){await loadSettings();await loadStatus()}
+async function loadAll(){await loadSettings();await loadStatus();startStream()}
 async function init(){try{let d=await api('/api/status');if(d.mustChangePassword){showSetup()}else{showApp();await loadAll()}}catch(e){showLogin()}
-  setInterval(()=>{if(!$('app').classList.contains('hidden'))loadStatus()},2000)}
+  // Safety poll: only fetches if the SSE stream has gone quiet (>4s).
+  setInterval(()=>{if($('app').classList.contains('hidden'))return;if(Date.now()-lastMsg>4000)loadStatus()},3000)}
 init();
 </script>
 </body></html>)HTMLDOC";

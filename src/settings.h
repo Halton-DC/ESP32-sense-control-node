@@ -11,10 +11,13 @@
 #include <stdint.h>
 
 #define SOFTWARE_VERSION_STR "2.0.0"
+#ifndef BUILD_NUMBER
+#define BUILD_NUMBER 0
+#endif
 
 // Compile-time defaults (override per fleet via build_flags).
 #ifndef DEFAULT_NODE_NAME
-#define DEFAULT_NODE_NAME "hdc-node-001"
+#define DEFAULT_NODE_NAME "" // empty => hdc-sense-<last 2 bytes of Ethernet MAC>
 #endif
 #ifndef DEFAULT_NODE_LOCATION
 #define DEFAULT_NODE_LOCATION "DC1 / Row A / Rack 01"
@@ -45,7 +48,7 @@
 #endif
 
 #define SETTINGS_MAGIC   0x48444332UL // "HDC2"
-#define SETTINGS_VERSION 4
+#define SETTINGS_VERSION 6
 #define PWD_SALT_LEN     16
 #define PWD_HASH_LEN     32
 #define PBKDF2_ITERS     20000
@@ -92,8 +95,12 @@ struct Settings {
   bool relay1State;          // desired state, restored on boot
   bool relay2State;
 
-  // --- Sensors ---
+  // --- Sensors / display ---
   uint16_t sensorIntervalMs; // sampling cadence
+  bool     tempUnitF;        // dashboard primary temperature unit: false=°C, true=°F
+  int16_t  tempOffC10;       // temperature calibration offset, 0.1 °C units
+  int16_t  humOff10;         // humidity calibration offset, 0.1 %RH units
+  int16_t  airflowOff;       // airflow calibration offset, raw ADC counts
 
   // --- Prometheus /metrics ---
   bool metricsEnabled;

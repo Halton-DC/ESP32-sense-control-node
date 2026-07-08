@@ -32,7 +32,12 @@
 #define RELAY2_PIN    37
 #define CONTACT1_PIN  43
 #define CONTACT2_PIN  44
-#define AIRFLOW_PIN   1
+#define AIRFLOW_PIN   1     // Omron D6F-V03A1 analog output (direct, 3.3V supply)
+// Velocity estimate from the sensor pin voltage. At 3.3V (below the sensor's
+// 10.8-24V rating) this is an approximate, monotonic index, not calibrated m/s.
+// Tune V0 (zero-flow volts) / GAIN (m/s per volt) vs a reference; offset zeros it.
+#define AIRFLOW_V0    0.50f
+#define AIRFLOW_GAIN  2.0f
 #define SDA_PIN       33
 #define SCL_PIN       34
 #define BOOT_BTN_PIN  0     // hold at power-up for factory reset
@@ -230,7 +235,7 @@ static void setupWifiStation() {
 static void startSetupAp() {
   uint8_t m[6];
   ETH.macAddress(m);
-  snprintf(apSsid, sizeof(apSsid), "HDC-Node-%02X%02X", m[4], m[5]);
+  snprintf(apSsid, sizeof(apSsid), "hdc-sense-%02x%02x%02x", m[3], m[4], m[5]);
   WiFi.mode(wifiUp ? WIFI_AP_STA : WIFI_AP);
   bool ok = WiFi.softAP(apSsid, g_settings.apPassword);
   if (ok) {
@@ -329,6 +334,9 @@ static void refreshSensors() {
   float t = sht31.readTemperature();
   float h = sht31.readHumidity();
   if (!isnan(t) && !isnan(h)) {
+    t += g_settings.tempOffC10 / 10.0f;      // apply calibration offsets
+    h += g_settings.humOff10 / 10.0f;
+    if (h < 0) h = 0; else if (h > 100) h = 100;
     metricTempC100 = (int)lroundf(t * 100.0f);
     metricTempF100 = (int)lroundf((t * 1.8f + 32.0f) * 100.0f);
     metricHum100   = (int)lroundf(h * 100.0f);
@@ -336,7 +344,11 @@ static void refreshSensors() {
   } else {
     sensorOk = false;
   }
-  metricAirflow = analogRead(AIRFLOW_PIN);
+  float vpin = analogReadMilliVolts(AIRFLOW_PIN) / 1000.0f;   // calibrated pin volts
+  float vel  = (vpin - AIRFLOW_V0) * AIRFLOW_GAIN;            // m/s estimate
+  vel += g_settings.airflowOff / 100.0f;                      // calibration offset (m/s)
+  if (vel < 0) vel = 0;
+  metricAirflow = (int)lroundf(vel * 100.0f);                // m/s x100
   metricC1 = digitalRead(CONTACT1_PIN);
   metricC2 = digitalRead(CONTACT2_PIN);
   snmpUptime = millis() / 10;
@@ -440,8 +452,12 @@ void setup() {
   lastRelay[0] = relayState[0]; lastRelay[1] = relayState[1];
 
   Wire.begin(SDA_PIN, SCL_PIN);
-  if (!sht31.begin(0x44)) Serial.println("[SENSOR] SHT31 not found at 0x44!");
-  else                    Serial.println("[SENSOR] SHT31 ready.");
+  if (!sht31.begin(0x44)) {
+    Serial.println("[SENSOR] SHT31 not found at 0x44!");
+  } else {
+    sht31.heater(false); // ensure the internal heater is OFF (else reads several °C high)
+    Serial.printf("[SENSOR] SHT31 ready (heater %s).\n", sht31.isHeaterEnabled() ? "ON" : "off");
+  }
 
   setupNetwork();
   buildStaticInfo();
@@ -478,11 +494,15 @@ void loop() {
     }
   }
 
-  static uint32_t lastRefresh = 0, lastDebug = 0, lastNet = 0;
+  static uint32_t lastRefresh = 0, lastDebug = 0, lastNet = 0, lastSse = 0;
   uint32_t now = millis();
   if (now - lastRefresh >= g_settings.sensorIntervalMs) {
     lastRefresh = now;
     refreshSensors();
+  }
+  if (now - lastSse >= 1000) {
+    lastSse = now;
+    webPushTelemetry();   // push telemetry to any SSE subscribers
   }
   if (now - lastNet >= 2000) {
     lastNet = now;

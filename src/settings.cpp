@@ -2,6 +2,7 @@
 #include <Preferences.h>
 #include <string.h>
 #include <esp_system.h>
+#include <esp_mac.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include "mbedtls/pkcs5.h"
@@ -48,10 +49,21 @@ void settingsLoadDefaults() {
   g_settings.magic   = SETTINGS_MAGIC;
   g_settings.version = SETTINGS_VERSION;
 
-  strlcpy_safe(g_settings.nodeName, DEFAULT_NODE_NAME, sizeof(g_settings.nodeName));
+  // Unique per-device name from the last 3 bytes of the factory eFuse MAC
+  // (24-bit device portion — collision-free across any realistic fleet).
+  // ESP_MAC_BASE reads the eFuse factory MAC; its low bytes match what the
+  // W5500 interface reports (ESP_MAC_ETH is a +1 derived variant).
+  uint8_t mac[6] = {0};
+  esp_read_mac(mac, ESP_MAC_BASE);
+  char autoName[24];
+  snprintf(autoName, sizeof(autoName), "hdc-sense-%02x%02x%02x", mac[3], mac[4], mac[5]);
+
+  const char *nn = (strlen(DEFAULT_NODE_NAME) > 0) ? DEFAULT_NODE_NAME : autoName;
+  strlcpy_safe(g_settings.nodeName, nn, sizeof(g_settings.nodeName));
   strlcpy_safe(g_settings.location, DEFAULT_NODE_LOCATION, sizeof(g_settings.location));
   strlcpy_safe(g_settings.contact,  DEFAULT_NODE_CONTACT,  sizeof(g_settings.contact));
-  settingsSanitizeHostname(DEFAULT_NODE_NAME, g_settings.hostname, sizeof(g_settings.hostname));
+  // Hostname is always MAC-derived by default (unique in the DHCP lease list).
+  settingsSanitizeHostname(autoName, g_settings.hostname, sizeof(g_settings.hostname));
 
   g_settings.dhcpEnabled = true;
   // Fallback static address (used if DHCP fails or is disabled).
@@ -95,6 +107,10 @@ void settingsLoadDefaults() {
   g_settings.relay2State = false;
 
   g_settings.sensorIntervalMs = 1000;
+  g_settings.tempUnitF = false; // Celsius by default
+  g_settings.tempOffC10 = 0;
+  g_settings.humOff10 = 0;
+  g_settings.airflowOff = 0;
 
   g_settings.metricsEnabled = true;
   g_settings.metricsToken[0] = '\0';   // open by default (set a token to require Bearer auth)

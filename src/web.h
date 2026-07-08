@@ -32,6 +32,10 @@ struct WebStatus {
 void webBegin();
 bool webStarted();
 
+// Push a telemetry frame to all connected SSE clients. Call periodically from
+// the main loop (e.g. ~1 Hz). No-op if there are no stream subscribers.
+void webPushTelemetry();
+
 // --- Implemented in main.cpp (runtime data + actuation) ---
 void appGetStatus(WebStatus *s);
 void appSetRelay(int idx, bool on); // idx 1..2; applies to GPIO and persists
