@@ -1,11 +1,11 @@
 HDC-SENSE-CONTROL-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-  MODULE-IDENTITY, OBJECT-TYPE, enterprises, Integer32, DisplayString
+  MODULE-IDENTITY, OBJECT-TYPE, enterprises, Integer32, TimeTicks, DisplayString
     FROM SNMPv2-SMI;
 
 hdcSenseControl MODULE-IDENTITY
-  LAST-UPDATED "202507190000Z"
+  LAST-UPDATED "202607080000Z"
   ORGANIZATION "Halton Datacenter"
   CONTACT-INFO
     "Antoine Boucher
@@ -73,10 +73,10 @@ hdcContact2 OBJECT-TYPE
   ::= { hdcDevice 8 }
 
 hdcUptime OBJECT-TYPE
-  SYNTAX      Integer32
+  SYNTAX      TimeTicks
   MAX-ACCESS  read-only
   STATUS      current
-  DESCRIPTION "System uptime in milliseconds"
+  DESCRIPTION "System uptime in hundredths of a second (TimeTicks)"
   ::= { hdcDevice 9 }
 
 hdcNodeName OBJECT-TYPE

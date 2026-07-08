@@ -1,111 +1,177 @@
 zabbix_export:
-  version: '6.0'
+  version: '7.0'
+  template_groups:
+    - uuid: 0a000001b2b2b2b2c3c3c3c3d4d4d4d4
+      name: Templates/Datacenter
+  value_maps: []
   templates:
-    - template: HDC Sense Control Node
-      name: HDC Sense Control Node
-      description: Template for ESP32-ETH SNMP-based Sense & Control node.
+    - uuid: 0a000002b2b2b2b2c3c3c3c3d4d4d4d4
+      template: 'HDC Sense Control Node'
+      name: 'HDC Sense & Control Node'
+      description: 'SNMPv2c monitoring for the HDC Sense & Control Node (ESP32-S3). Enterprise OID base .1.3.6.1.4.1.55555. Set the host SNMP interface community to {$SNMP_COMMUNITY}.'
       groups:
-        - name: SNMP Devices
+        - name: Templates/Datacenter
+      macros:
+        - macro: '{$SNMP_COMMUNITY}'
+          value: 'hdc-ro-9f3a'  # node read community
+          description: 'SNMP v2c read community of the node'
+        - macro: '{$HDC.TEMP.HIGH}'
+          value: '30'
+        - macro: '{$HDC.TEMP.CRIT}'
+          value: '35'
+        - macro: '{$HDC.HUM.HIGH}'
+          value: '70'
+      valuemaps:
+        - uuid: 0a000003b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'HDC Relay State'
+          mappings:
+            - {value: '0', newvalue: 'Off'}
+            - {value: '1', newvalue: 'On'}
+        - uuid: 0a000004b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'HDC Contact State'
+          mappings:
+            - {value: '0', newvalue: 'Open'}
+            - {value: '1', newvalue: 'Closed'}
       items:
-        - name: Temperature (Celsius)
-          key: hdcTemperatureC
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.1.0
-          units: "°C"
+        - uuid: 0a000101b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Temperature'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.1.0'
+          key: hdc.temp.c
+          delay: 30s
+          value_type: FLOAT
+          units: '!°C'
           preprocessing:
             - type: MULTIPLIER
-              parameters: [0.01]
-
-        - name: Temperature (Fahrenheit)
-          key: hdcTemperatureF
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.2.0
-          units: "°F"
+              parameters: ['0.01']
+          tags:
+            - {tag: component, value: environment}
+          triggers:
+            - uuid: 0a000201b2b2b2b2c3c3c3c3d4d4d4d4
+              expression: 'last(/HDC Sense Control Node/hdc.temp.c)>{$HDC.TEMP.HIGH}'
+              name: 'High temperature ({ITEM.LASTVALUE1})'
+              priority: WARNING
+            - uuid: 0a000202b2b2b2b2c3c3c3c3d4d4d4d4
+              expression: 'last(/HDC Sense Control Node/hdc.temp.c)>{$HDC.TEMP.CRIT}'
+              name: 'Critical temperature ({ITEM.LASTVALUE1})'
+              priority: HIGH
+        - uuid: 0a000102b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Temperature (F)'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.2.0'
+          key: hdc.temp.f
+          delay: 30s
+          value_type: FLOAT
+          units: '!°F'
           preprocessing:
             - type: MULTIPLIER
-              parameters: [0.01]
-
-        - name: Humidity
-          key: hdcHumidity
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.3.0
-          units: "%"
+              parameters: ['0.01']
+          tags:
+            - {tag: component, value: environment}
+        - uuid: 0a000103b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Humidity'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.3.0'
+          key: hdc.humidity
+          delay: 30s
+          value_type: FLOAT
+          units: '%'
           preprocessing:
             - type: MULTIPLIER
-              parameters: [0.01]
-
-        - name: Airflow (raw ADC)
-          key: hdcAirflow
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.4.0
-
-        - name: Relay 1
-          key: hdcRelay1
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.5.0
-
-        - name: Relay 2
-          key: hdcRelay2
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.6.0
-
-        - name: Contact Input 1
-          key: hdcContact1
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.7.0
-
-        - name: Contact Input 2
-          key: hdcContact2
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.8.0
-
-        - name: Uptime (ms)
-          key: hdcUptime
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.9.0
-
-        - name: Node Name
-          key: hdcNodeName
-          type: SNMP agent
-          value_type: text
-          snmp_oid: .1.3.6.1.4.1.55555.1.10.0
-
-        - name: Board Info
-          key: hdcBoardInfo
-          type: SNMP agent
-          value_type: text
-          snmp_oid: .1.3.6.1.4.1.55555.1.11.0
-
-        - name: Chip Info
-          key: hdcChipInfo
-          type: SNMP agent
-          value_type: text
-          snmp_oid: .1.3.6.1.4.1.55555.1.12.0
-
-        - name: MAC Address
-          key: hdcMacAddress
-          type: SNMP agent
-          value_type: text
-          snmp_oid: .1.3.6.1.4.1.55555.1.13.0
-
-        - name: Flash Size
-          key: hdcFlashSize
-          type: SNMP agent
-          value_type: numeric
-          snmp_oid: .1.3.6.1.4.1.55555.1.14.0
-          units: B
-
-        - name: Software Version
-          key: hdcSoftwareVersion
-          type: SNMP agent
-          value_type: text
-          snmp_oid: .1.3.6.1.4.1.55555.1.15.0
+              parameters: ['0.01']
+          tags:
+            - {tag: component, value: environment}
+          triggers:
+            - uuid: 0a000203b2b2b2b2c3c3c3c3d4d4d4d4
+              expression: 'last(/HDC Sense Control Node/hdc.humidity)>{$HDC.HUM.HIGH}'
+              name: 'High humidity ({ITEM.LASTVALUE1})'
+              priority: WARNING
+        - uuid: 0a000104b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Airflow (raw ADC)'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.4.0'
+          key: hdc.airflow
+          delay: 30s
+          value_type: UNSIGNED
+          tags:
+            - {tag: component, value: environment}
+        - uuid: 0a000105b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Relay 1'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.5.0'
+          key: hdc.relay1
+          delay: 30s
+          value_type: UNSIGNED
+          valuemap: {name: 'HDC Relay State'}
+          tags:
+            - {tag: component, value: control}
+        - uuid: 0a000106b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Relay 2'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.6.0'
+          key: hdc.relay2
+          delay: 30s
+          value_type: UNSIGNED
+          valuemap: {name: 'HDC Relay State'}
+          tags:
+            - {tag: component, value: control}
+        - uuid: 0a000107b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Contact 1'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.7.0'
+          key: hdc.contact1
+          delay: 30s
+          value_type: UNSIGNED
+          valuemap: {name: 'HDC Contact State'}
+          tags:
+            - {tag: component, value: input}
+        - uuid: 0a000108b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Contact 2'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.8.0'
+          key: hdc.contact2
+          delay: 30s
+          value_type: UNSIGNED
+          valuemap: {name: 'HDC Contact State'}
+          tags:
+            - {tag: component, value: input}
+        - uuid: 0a000109b2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Uptime'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.9.0'
+          key: hdc.uptime
+          delay: 60s
+          value_type: FLOAT
+          units: uptime
+          preprocessing:
+            - type: MULTIPLIER
+              parameters: ['0.01']
+          tags:
+            - {tag: component, value: system}
+        - uuid: 0a00010ab2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Node name'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.10.0'
+          key: hdc.nodename
+          delay: 1h
+          value_type: CHAR
+          tags:
+            - {tag: component, value: system}
+        - uuid: 0a00010bb2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'MAC address'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.13.0'
+          key: hdc.mac
+          delay: 1h
+          value_type: CHAR
+          tags:
+            - {tag: component, value: system}
+        - uuid: 0a00010cb2b2b2b2c3c3c3c3d4d4d4d4
+          name: 'Firmware version'
+          type: SNMP_AGENT
+          snmp_oid: '1.3.6.1.4.1.55555.1.15.0'
+          key: hdc.fwversion
+          delay: 1h
+          value_type: CHAR
+          tags:
+            - {tag: component, value: system}
